@@ -11,14 +11,13 @@ namespace ExceptionWrapper
             Console.Write($"Result: {await await DoToo()}");
         }
 
-        private static async TaskLike<string> Do(string z)
+        private static async BaseResult<string> Do(string z)
         {
-            var x = await new TaskLike<string>("drop", true);
-            var y = await new TaskLike<string>("drop", true);
-            return x + y + z;
+            var x = await new SuccessBaseResult<string>("success");
+            return x + z;
         }
 
-        private static async Task<TaskLike<string>> DoToo()
+        private static async Task<IBaseResult<string, string>> DoToo()
         {
             var z = await Task.Run(() =>
             {
