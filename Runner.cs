@@ -1,32 +1,20 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Net.Mail;
 
 namespace ExceptionWrapper
 {
     public static class Runner
     {
-        public static async Task Main()
+        public static void Main()
         {
-            Console.Write($"Result: {await await DoToo()}");
+            Do()
+                .Then(c => Console.Write($"Good Result!\n{c}"))
+                .Catch(c => Console.Write($"Oh no boys!\n{c.Print()}"));
         }
 
-        private static async BaseResult<string> Do(string z)
+        private static async BaseResult<string> Do()
         {
-            var x = await new SuccessBaseResult<string>("success");
-            return x + z;
-        }
-
-        private static async Task<IBaseResult<string, string>> DoToo()
-        {
-            var z = await Task.Run(() =>
-            {
-                Console.WriteLine("sleeping");
-                Thread.Sleep(1000);
-                Console.WriteLine("slept");
-                return "taskdrop";
-            });
-            return Do(z);
+            throw new SmtpException("I cannot possibly understand how to recover from this");
         }
     }
 }
