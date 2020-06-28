@@ -21,15 +21,11 @@ namespace ExceptionWrapper
         {
         }
 
-        public void SetException(Exception exception)
-        {
-            Console.WriteLine("SetException");
+        public void SetException(Exception exception) =>
             _err = new BaseException(ExceptionDispatchInfo.Capture(exception));
-        }
 
         public void SetResult(T result)
         {
-            Console.WriteLine("SetResult");
             _result = result;
             _hasResult = true;
         }
@@ -70,20 +66,9 @@ namespace ExceptionWrapper
             }
         }
 
-        public BaseResult<T> Task
-        {
-            get
-            {
-
-                Console.WriteLine($"Task {_hasResult} {_result} {_err}");
-
-                if (_hasResult)
-                {
-                    return new SuccessBaseResult<T>(_result);
-                }
-
-                return (BaseResult<T>) new FailureBaseResult<T>(_err);
-            }
-        }
+        public BaseResult<T> Task =>
+            _hasResult
+                ? new SuccessBaseResult<T>(_result)
+                : (BaseResult<T>) new FailureBaseResult<T>(_err);
     }
 }

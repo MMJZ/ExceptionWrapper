@@ -6,8 +6,6 @@ namespace ExceptionWrapper
 {
     public static class F
     {
-        public static T Id<T>(T t) where T : notnull => t;
-
         public static BaseResult<TValue> TryGetValue<TKey, TValue>(this IDictionary<TKey, TValue> dictionary,
             TKey key) where TKey : notnull => dictionary.TryGetValue(key, out var value)
             ? new SuccessBaseResult<TValue>(value)
