@@ -3,11 +3,15 @@ using System.Runtime.CompilerServices;
 
 namespace ExceptionWrapper
 {
-    public interface IAwaitResult<out T, out TErr> : ICriticalNotifyCompletion
+    public interface IAwaitResultErrorHolder<out TErr> : ICriticalNotifyCompletion
+    {
+        TErr GetError();
+    }
+
+    public interface IAwaitResult<out T, out TErr> : IAwaitResultErrorHolder<TErr>
     {
         bool IsCompleted { get; }
         T GetResult();
-        TErr GetError();
     }
 
     public readonly struct SuccessAwaitResult<T, TErr> : IAwaitResult<T, TErr>
