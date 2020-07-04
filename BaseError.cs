@@ -4,6 +4,7 @@ namespace ExceptionWrapper
 {
     public abstract class BaseError
     {
+        public BaseError? UnderlyingError { get; set; }
         public abstract string Print();
     }
 

@@ -1,68 +1,74 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net.Mail;
-using System.Threading.Tasks;
 
 namespace ExceptionWrapper
 {
     public class Runner
     {
-        public static async Task Main() => await new Runner().Run();
+        public static void Main() => new Runner().Run();
 
         private readonly Dictionary<string, int> _oddDictionary = new Dictionary<string, int>
         {
             ["first"] = 1,
-            ["third"] = 3,
+            ["third"] = 3
         };
 
         private readonly Dictionary<string, int> _evenDictionary = new Dictionary<string, int>
         {
             ["second"] = 2,
-            ["fourth"] = 4,
+            ["fourth"] = 4
         };
 
-        private async Task Run()
+        private void Run()
         {
-            (await Do())
+            GetDictionaryLookupSum()
                 .Then(c => Console.Write($"Good Result!\n{c}"))
-                .Catch(c => Console.Write($"Sad Result!\n{c.Print()}"));
+                .Catch(c => Console.Write($"Sad Result!\n{c?.Print()}"));
         }
 
-        private async Task<BaseResult<int>> Do()
+        private async BaseResult<int> GetDictionaryLookupSum()
         {
-            // Tasks should also return BaseResults instead of throwing Exceptions
-            var canShowNumber = await Task.Run(
-                (Func<BaseResult<bool>>) (async () => true));
+            var first = await First()
+                .TryRecover(async err =>
+                {
+                    await Guard
+                        .Require(err is BaseException ex
+                                 && ex.Exception.SourceException is OutOfMemoryException)
+                        .WithError(new BaseErrorMessage("Unable to recover if not OOM Exception"));
+                    return "first";
+                });
 
-            // Handle async Tasks and async BaseResults in different async blocks
-            return ((Func<BaseResult<int>>) (async () =>
-            {
-                var first = await First();
-                var second = await Second(first);
-                var number = await _oddDictionary.TryGetValue(second)
-                    .TryRecover(_ => _evenDictionary.TryGetValue(second));
-                return await canShowNumber ? number : 0;
-            }))();
+            var firstLookup = await _oddDictionary
+                .TryGetValue(first)
+                .WithError(new BaseErrorMessage("failed to do odd numbers dictionary"));
+
+            await Guard
+                .Require(firstLookup > 0)
+                .WithError(new BaseErrorMessage("needed positive value from dictionary"));
+
+            var second = await Second(first);
+            var secondLookup = _evenDictionary
+                .TryGetValue(second)
+                // Bad idea to default value without logging when it happens...
+                .Catch(_ => Console.WriteLine("Defaulting lookup on evenDictionary - key not found"))
+                .UnwrapOrDefault(5);
+
+            return firstLookup + secondLookup;
         }
 
-        private static BaseResult<string> First()
+        // If this function isn't async, the thrown exception will bubble past the Guard above...
+        private static async BaseResult<string> First()
         {
-            // throw new OutOfMemoryException("Panicky exception");
-            return new SuccessBaseResult<string>("sec");
+           throw new OutOfMemoryException("Panicky exception");
+           // throw new Exception("general exception");
+           // return "first";
         }
 
         private static async BaseResult<string> Second(string first)
         {
-            // throw new DllNotFoundException("Other panicky exception");
-
-            // Use async funcs to wrap up successful results automatically
-            return first + "ond";
-        }
-
-        private static BaseResult<string> BadCall()
-        {
-            return new FailureBaseResult<string>(new BaseErrorMessage("V big panic"));
+            // Use async signatures to wrap up successful results automatically
+            return first + "-bad-lookup-attempt";
+            // return "second";
         }
     }
 }
